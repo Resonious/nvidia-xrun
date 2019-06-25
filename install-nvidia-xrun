@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+
+function print_help {
+  echo "installer/uninstaller for nvidia-xrun"
+  echo "Usage: "
+  echo "install-nvidia-xrun [<options>]"
+  echo "Options: "
+  echo "  -d    Dry run   - prints commands but does not execute them"
+  echo "  -u    Uninstall - uninstalls nvidia-xrun instead of installing it"
+}
+
+function execute {
+  if [[ ${DRY_RUN} -eq 1 ]]
+    then
+    echo ">>Dry run. Command: $*"
+  else
+    eval $*
+  fi
+}
+
+
+# Arguments
+
+UNINSTALL=0
+DRY_RUN=0
+ENABLE_PM=0
+
+while getopts ":dup" opt; do
+  case ${opt} in
+    d ) DRY_RUN=1
+      ;;
+    u ) UNINSTALL=1
+      ;;
+    p ) ENABLE_PM=1
+      ;;
+    \? ) echo "Usage: cmd [-d] [-u] [-p]"
+	 echo "    -d: dry run, print commands but don't execute them"
+	 echo "    -u: uninstall"
+	 echo "    -p: enable power management service"
+	 exit
+      ;;
+  esac
+done
+
+
+# Sanity checks
+
+if [[ "$DRY_RUN" == '0' && "$(whoami)" != "root" ]]; then
+  echo "You must be root in order to install nvidia-xrun"
+  exit 1
+fi
+
+if ! ls nvidia-xrun; then
+  echo "Please run this inside the nvidia-xrun project directory"
+  exit 1
+fi
+
+
+# Perform installation
+
+if [[ "$UNINSTALL" == '0' ]]; then
+  execute mkdir -p /etc/X11/xinit/nvidia-xinit.d
+  execute mkdir -p /etc/X11/nvidia-xorg.conf.d
+
+  execute ln -s "$PWD/nvidia-xrun"                 /usr/sbin/nvidia-xrun
+  execute ln -s "$PWD/nvidia-xorg.conf"            /etc/X11/nvidia-xorg.conf
+  execute ln -s "$PWD/nvidia-xinitrc"              /etc/X11/xinit/nvidia-xinitrc
+  execute ln -s "$PWD/config/nvidia-xrun"          /etc/default/nvidia-xrun
+  execute ln -s "$PWD/nvidia-xrun-openbox.desktop" /usr/share/xsessions/nvidia-xrun-openbox.desktop
+  execute ln -s "$PWD/nvidia-xrun-plasma.desktop"  /usr/share/xsessions/nvidia-xrun-plasma.desktop
+  execute cp    nvidia-xrun-pm.service             /etc/systemd/system/nvidia-xrun-pm.service
+  if [[ "$ENABLE_PM" == '1' ]]; then
+    execute systemctl enable nvidia-xrun-pm.service
+  fi
+
+  execute echo 'Done installing nvidia-xrun'
+else
+  execute rm /usr/sbin/nvidia-xrun
+  execute rm /etc/X11/nvidia-xorg.conf
+  execute rm /etc/X11/xinit/nvidia-xinitrc
+  execute rm /etc/systemd/system/nvidia-xrun-pm.service
+  execute rm /etc/default/nvidia-xrun
+  execute rm /usr/share/xsessions/nvidia-xrun-openbox.desktop
+  execute rm /usr/share/xsessions/nvidia-xrun-plasma.desktop
+  execute systemctl disable nvidia-xrun-pm.service
+
+  execute echo 'Done uninstalling nvidia-xrun'
+fi
