@@ -60,29 +60,27 @@ fi
 # Perform installation
 
 if [[ "$UNINSTALL" == '0' ]]; then
-  execute mkdir -p /etc/X11/xinit/nvidia-xinit.d
-  execute mkdir -p /etc/X11/nvidia-xorg.conf.d
+  execute install -dm 555 /etc/X11/xinit/nvidia-xinitrc.d
+  execute install -dm 555 /etc/X11/nvidia-xorg.conf.d
 
-  execute ln -s "$PWD/nvidia-xrun"                 /usr/sbin/nvidia-xrun
-  execute ln -s "$PWD/nvidia-xorg.conf"            /etc/X11/nvidia-xorg.conf
-  execute ln -s "$PWD/nvidia-xinitrc"              /etc/X11/xinit/nvidia-xinitrc
-  execute ln -s "$PWD/config/nvidia-xrun"          /etc/default/nvidia-xrun
-  execute ln -s "$PWD/nvidia-xrun-openbox.desktop" /usr/share/xsessions/nvidia-xrun-openbox.desktop
-  execute ln -s "$PWD/nvidia-xrun-plasma.desktop"  /usr/share/xsessions/nvidia-xrun-plasma.desktop
-  execute cp    nvidia-xrun-pm.service             /etc/systemd/system/nvidia-xrun-pm.service
+  execute install -Dm 644 nvidia-xorg.conf /etc/X11/nvidia-xorg.conf
+  execute install -Dm 644 nvidia-xinitrc /etc/X11/xinit/nvidia-xinitrc
+  execute install -Dm 755 nvidia-xrun /usr/bin/nvidia-xrun
+  execute install -Dm 644 config/nvidia-xrun /etc/default/nvidia-xrun
+
+  execute cp nvidia-xrun-pm.service /etc/systemd/system/nvidia-xrun-pm.service
   if [[ "$ENABLE_PM" == '1' ]]; then
     execute systemctl enable nvidia-xrun-pm.service
   fi
 
   execute echo 'Done installing nvidia-xrun'
 else
-  execute rm /usr/sbin/nvidia-xrun
   execute rm /etc/X11/nvidia-xorg.conf
   execute rm /etc/X11/xinit/nvidia-xinitrc
-  execute rm /etc/systemd/system/nvidia-xrun-pm.service
+  execute rm /usr/bin/nvidia-xrun
   execute rm /etc/default/nvidia-xrun
-  execute rm /usr/share/xsessions/nvidia-xrun-openbox.desktop
-  execute rm /usr/share/xsessions/nvidia-xrun-plasma.desktop
+
+  execute rm /etc/systemd/system/nvidia-xrun-pm.service
   execute systemctl disable nvidia-xrun-pm.service
 
   execute echo 'Done uninstalling nvidia-xrun'
