@@ -19,10 +19,7 @@ function execute {
 }
 
 function turn_off_gpu {
-  if which surface; then
-    echo 'Turning off Surface Book dGPU'
-    execute "sudo surface dgpu set off"
-  elif [[ "$REMOVE_DEVICE" == '1' ]]; then
+  if [[ "$REMOVE_DEVICE" == '1' ]]; then
     echo 'Removing Nvidia bus from the kernel'
     execute "sudo tee /sys/bus/pci/devices/${DEVICE_BUS_ID}/remove <<<1"
   else
@@ -32,29 +29,34 @@ function turn_off_gpu {
 
   echo 'Enabling powersave for the PCIe controller'
   execute "sudo tee /sys/bus/pci/devices/${CONTROLLER_BUS_ID}/power/control <<<auto"
+
+  if which surface; then
+    echo 'Turning off Surface Book dGPU'
+    execute "sudo surface dgpu set off"
+  fi
 }
 
 function turn_on_gpu {
+  echo 'Turning the PCIe controller on to allow card rescan'
+  execute "sudo tee /sys/bus/pci/devices/${CONTROLLER_BUS_ID}/power/control <<<on"
+
+  echo 'Waiting 1 second'
+  execute "sleep 1"
+
   if which surface; then
     echo 'Turning on Surface Book dGPU'
     execute "sudo surface dgpu set on"
-  else
-    echo 'Turning the PCIe controller on to allow card rescan'
-    execute "sudo tee /sys/bus/pci/devices/${CONTROLLER_BUS_ID}/power/control <<<on"
-
-    echo 'Waiting 1 second'
-    execute "sleep 1"
-
-    if [[ ! -d /sys/bus/pci/devices/${DEVICE_BUS_ID} ]]; then
-      echo 'Rescanning PCI devices'
-      execute "sudo tee /sys/bus/pci/rescan <<<1"
-      echo "Waiting ${BUS_RESCAN_WAIT_SEC} second for rescan"
-      execute "sleep ${BUS_RESCAN_WAIT_SEC}"
-    fi
-
-    echo 'Turning the card on'
-    execute "sudo tee /sys/bus/pci/devices/${DEVICE_BUS_ID}/power/control <<<on"
   fi
+
+  if [[ ! -d /sys/bus/pci/devices/${DEVICE_BUS_ID} ]]; then
+  echo 'Rescanning PCI devices'
+  execute "sudo tee /sys/bus/pci/rescan <<<1"
+  echo "Waiting ${BUS_RESCAN_WAIT_SEC} second for rescan"
+  execute "sleep ${BUS_RESCAN_WAIT_SEC}"
+  fi
+
+  echo 'Turning the card on'
+  execute "sudo tee /sys/bus/pci/devices/${DEVICE_BUS_ID}/power/control <<<on"
 }
 
 function load_modules {

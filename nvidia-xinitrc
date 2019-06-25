@@ -37,7 +37,9 @@ fi
 xrandr --setprovideroutputsource modesetting NVIDIA-0
 xrandr --auto
 
-if [[ -f "$userxinitrc" ]]; then
+# TODO I'm not sure if the following line works.
+# It causes the script to terminate right now.
+if [ "$userxinitrc" != "" ] && [ -f "$userxinitrc" ]; then
     sh ${userxinitrc} $*
 else
     if [[ $# -gt 0 ]]; then
