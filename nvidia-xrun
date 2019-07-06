@@ -132,7 +132,7 @@ fi
 
 EXECL="/etc/X11/xinit/nvidia-xinitrc \"$EXECL\""
 
-COMMAND="xinit $EXECL -- $NEWDISP vt$LVT -nolisten tcp -br -config nvidia-xorg.conf -configdir nvidia-xorg.conf.d"
+COMMAND="xinit $EXECL -- $NEWDISP vt$LVT -nolisten tcp -br -config nvidia-xorg.conf -configdir nvidia-xorg.conf.d -dpi 192"
 
 # --------- TURNING ON GPU -----------
 if [[ "$ENABLE_PM" == '1' ]]; then
